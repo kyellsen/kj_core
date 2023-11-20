@@ -39,15 +39,16 @@ class PlotManager:
         if self.grid:
             layout.update(dict(showgrid=self.grid))
 
-    def save_plot(self, fig, filename, subdir=None, format='jpg'):
+    def save_plot(self, fig, filename, subdir=None, format='jpg', auto_close=True):
         """
-        Save a plot. The function will automatically handle Matplotlib and Plotly figures.
+        Save a plot and optionally close it.
 
         Parameters:
             fig: The figure object to save.
             filename (str): The name of the file.
             subdir (str, optional): The subdirectory in which to save the file.
-            format (str, optional): The format to save the figure ('jpg' for Matplotlib, 'html' for Plotly).
+            format (str, optional): The format to save the figure.
+            auto_close (bool, optional): Automatically close the plot after saving. Only for matplotlob.
         """
         dir_path = self.get_dir_path(subdir)
 
@@ -57,6 +58,20 @@ class PlotManager:
         else:
             full_path = dir_path / f"{filename}.{format}"
             fig.savefig(str(full_path), dpi=self.dpi)
+            if auto_close:
+                self.close_plot(fig)
+
+    def close_plot(self, fig):
+        """
+        Closes the given matplotlib figure.
+
+        Parameters:
+            fig (matplotlib.figure.Figure): The figure to close.
+        """
+        try:
+            plt.close(fig)
+        except Exception as e:
+            logging.error(f"Failed to close plot: {e}")
 
     def get_dir_path(self, subdir=None):
         """
