@@ -16,7 +16,7 @@ class PlotManager:
         self.plot_directory.mkdir(parents=True, exist_ok=True)
 
         self.figsize = (8, 6)
-        self.dpi = 300
+        self.dpi = 200# 300 beste
         self.style = 'default'
         self.grid = True
         self.wide_format = True
