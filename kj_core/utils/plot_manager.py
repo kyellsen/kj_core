@@ -71,7 +71,7 @@ class PlotManager:
         try:
             plt.close(fig)
         except Exception as e:
-            logging.error(f"Failed to close plot: {e}")
+            logger.error(f"Failed to close plot: {e}")
 
     def get_dir_path(self, subdir=None):
         """
