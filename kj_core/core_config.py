@@ -32,10 +32,7 @@ class CoreConfig:
         self.log_directory = self.working_directory / "logs"
         self.plot_directory = self.working_directory / "plots"
         self.data_directory = self.working_directory / "data"
-
-
-        self.database_name = "database.db"
-        self.database_path = self.working_directory / self.database_name
+        self.database_directory = self.working_directory / "databases"
 
     def set_working_directory(self, directory: str) -> None:
         """
