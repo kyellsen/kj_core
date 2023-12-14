@@ -36,6 +36,7 @@ class CoreBaseClass(Base):
         Raises:
             ValueError: If 'config' is None, indicating improper initialization.
         """
+        super().__init__()
         if config is None:
             raise ValueError("Config is None. The package has not been properly initialized. "
                              "Please call the setup function with a valid configuration.")
@@ -49,4 +50,4 @@ class CoreBaseClass(Base):
         if plot_manager is not None:
             self.PLOT_MANAGER = plot_manager
 
-        super().__init__()
+

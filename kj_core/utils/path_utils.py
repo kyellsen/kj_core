@@ -1,93 +1,66 @@
 from pathlib import Path
+from typing import Optional, Union, List
+from typing import Callable
 
 from .log_manager import get_logger
 
 logger = get_logger(__name__)
 
 
-def validate_and_get_path(path):
+def validate_and_get_file_list(search_path: Path, file_type: Optional[str] = None) -> Optional[List[Path]]:
     """
-    Überprüft, ob der eingegebene Pfad ein gültiges Path-Objekt ist oder in ein solches umgewandelt werden kann.
-    Wenn die Umwandlung erfolgreich ist, wird das Path-Objekt zurückgegeben, ansonsten wird None zurückgegeben.
+    Searches for files in the given path and returns them as a list. If a file type is specified,
+    it searches only for files of that type, otherwise, it searches for all files.
 
-    :param path: Ein String oder Path-Objekt, das den zu überprüfenden Pfad repräsentiert.
-    :return: Ein gültiges Path-Objekt oder None.
+    :param search_path: The path in which to search.
+    :param file_type: Optional. The type of files to search for (e.g., 'csv').
+    :return: List of paths to the found files.
     """
-    if path is None:
-        logger.warning(f"Filepath = None, Prozess abgebrochen.")
-        return None
+    if file_type:
+        file_type = file_type.lower()
+        search_pattern = f'**/*.{file_type}'
+    else:
+        search_pattern = '**/*'
 
-    try:
-        path = Path(path)
-    except TypeError as e:
-        logger.error(f"Input kann nicht in ein Path-Objekt umgewandelt werden. Fehler: {e}")
-        return None
-
-    return path
-
-
-def validate_and_get_filepath(filepath):
-    """
-    Überprüft, ob der angegebene Pfad zu einer existierenden Datei führt.
-
-    :param filepath: Ein String oder Path-Objekt, das den zu überprüfenden Pfad repräsentiert.
-    :return: Ein gültiges Path-Objekt oder None, wenn der Pfad nicht zu einer existierenden Datei führt.
-    """
-    filepath = validate_and_get_path(filepath)
-    if filepath is None:
-        logger.warning(f"Filepath = None, Prozess abgebrochen.")
-        return None
-
-    if not filepath.is_file():
-        logger.error(f"Die Datei {filepath} existiert nicht.")
-        return None
-    return filepath
-
-
-def validate_and_get_file_list(search_path: Path):
-    """
-    Sucht nach CSV-Dateien im angegebenen Pfad und gibt diese als Liste zurück.
-
-    :param search_path: Der Pfad, in dem gesucht werden soll
-    :return: Liste mit Pfaden zu den gefundenen CSV-Dateien
-    """
-    files = list(search_path.glob('**/*.csv'))
+    files = list(search_path.glob(search_pattern))
 
     if not files:
-        logger.warning(f"Keine CSV-Dateien in Pfad gefunden: {search_path}")
+        logger.warning(f"No files found in path: {search_path}")
         return None
 
-    logger.info(f"Gefundene Dateien: {[file.stem for file in files]}")
+    # Filter the files to include all case variations of the file type
+    if file_type:
+        files = [f for f in files if f.suffix.lower() == f'.{file_type}']
+
+    logger.info(f"Found files: {[file.stem for file in files]}")
     return files
 
 
-def extract_sensor_id(files=None):
-    """
-    Extrahiert die Sensor-ID aus den Dateinamen und gibt diese als Liste zurück.
+def extract_last_three_digits(file: Path) -> int:
+    return int(file.stem[-3:])
 
-    :param files: Liste von Dateipfaden
-    :return: Liste mit Sensor-IDs oder bei Fehler None
+
+def extract_sensor_id(files: Optional[List[Path]], id_extractor: Callable[[Path], int] = extract_last_three_digits) -> \
+        Optional[List[int]]:
     """
-    try:
-        sensor_id_list = [int(filename.stem[-3:]) for filename in files]
-    except ValueError as e:
-        logger.error(f"Extraktion der Sensor-ID aus Dateinamen fehlgeschlagen. Fehler: {e}")
+    Extracts sensor IDs from the filenames using a provided extraction function and returns them as a list.
+    Uses 'extract_last_three_digits' as the default method for extracting sensor IDs.
+
+    :param files: List of file paths.
+    :param id_extractor: A function that takes a Path object and returns an integer sensor ID.
+    :return: List of sensor IDs, or None in case of an error.
+    """
+    if files is None:
         return None
 
-    logger.info(f"Extrahierte Sensor-IDs: {sensor_id_list}")
+    sensor_id_list = []
+    for file in files:
+        try:
+            sensor_id = id_extractor(file)
+            sensor_id_list.append(sensor_id)
+        except Exception as e:
+            logger.error(f"Failed to extract sensor ID from filename {file.name}. Error: {e}")
+            return None
+
+    logger.info(f"Extracted sensor IDs: {sensor_id_list}")
     return sensor_id_list
-
-
-def validate_files_exist(folder_path: Path, filename: str) -> bool:
-    """
-    Checks if given files exist at the provided folder path.
-
-    :param folder_path: The Path where the txt files are located.
-    :param filename: Name of the first txt file.
-    :return: True if file exist, False otherwise.
-    """
-    # Check if the files exist
-    if not folder_path.joinpath(filename).exists():
-        logger.error(f"File {filename} do not exist.")
-        return False
-    return True
