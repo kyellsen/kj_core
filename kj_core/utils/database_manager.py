@@ -1,8 +1,9 @@
-from sqlalchemy import create_engine
+from typing import List, Optional, Union, Any
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.declarative import declarative_base
 from kj_core.utils.base import Base
+from kj_core.utils.runtime_manager import dec_runtime
 
 from pathlib import Path
 import shutil
@@ -20,14 +21,13 @@ class DatabaseManager:
     duplication of SQLite database files and establishes connections to these databases.
     """
 
-    def __init__(self, config: CoreConfig):  # , base: declarative_base
+    def __init__(self, config: CoreConfig):
         """
         Initializes the DatabaseManager with configurations.
 
         :param config: Core configuration object containing database settings.
         """
         self.config = config
-        # self.Base = base
 
         self.database_directory = Path(config.database_directory)
         self.database_directory.mkdir(parents=True, exist_ok=True)
@@ -119,18 +119,50 @@ class DatabaseManager:
             raise
 
     @staticmethod
+    @dec_runtime
     def process_instance_changes(new_instances, dirty_instances, deleted_instances):
-        for instance in new_instances:
-            if isinstance(instance, CoreDataClass):
-                instance.write_data_file()  # oder eine andere relevante Methode
-        for instance in dirty_instances:
-            if isinstance(instance, CoreDataClass):
-                instance.write_data_file()
-        for instance in deleted_instances:
-            if isinstance(instance, CoreDataClass):
-                instance.delete_data_file()
+        logger.debug(f"Starting process_instance_changes")
 
-    def get_session(self) -> Session:
+        # Loggen der neuen Instanzen
+        if new_instances:
+            logger.info(
+                f"Processing new instances: {[instance for instance in new_instances if isinstance(instance, CoreDataClass)]}")
+            for instance in new_instances:
+                if isinstance(instance, CoreDataClass):
+                    try:
+                        instance.write_data_feather()
+                        logger.debug(f"Data written to feather for new instance: {instance}")
+                    except Exception as e:
+                        logger.error(f"Error writing data to feather for new instance {instance}: {e}")
+
+        # Loggen der geänderten Instanzen
+        if dirty_instances:
+            logger.info(
+                f"Processing dirty instances: {[instance for instance in dirty_instances if isinstance(instance, CoreDataClass)]}")
+            for instance in dirty_instances:
+                if isinstance(instance, CoreDataClass):
+                    try:
+                        instance.write_data_feather()
+                        logger.debug(f"Data written to feather for dirty instance: {instance}")
+                    except Exception as e:
+                        logger.error(f"Error writing data to feather for dirty instance {instance}: {e}")
+
+        # Loggen der gelöschten Instanzen
+        if deleted_instances:
+            logger.info(
+                f"Processing deleted instances: {[instance for instance in deleted_instances if isinstance(instance, CoreDataClass)]}")
+            for instance in deleted_instances:
+                if isinstance(instance, CoreDataClass):
+                    try:
+                        instance.delete_data_feather()
+                        logger.debug(f"Data deleted from feather for instance: {instance}")
+                    except Exception as e:
+                        logger.error(f"Error deleting data from feather for instance {instance}: {e}")
+
+        logger.debug("Finished process_instance_changes")
+
+    @property
+    def session(self) -> Session:
         """
         Returns the same session instance for the lifetime of the DatabaseManager instance.
         """
@@ -157,3 +189,47 @@ class DatabaseManager:
                 raise e
         else:
             logger.warning("Changes were not committed to the database and discarded.")
+
+    def load(self, class_name, ids: Optional[Union[int, List[int]]] = None) -> List[Any]:
+        """
+        Load instances of a specified class from a SQLite database using SQLAlchemy.
+
+        Parameters
+        ----------
+        class_name : class
+            The class of which instances are to be loaded.
+        ids : int, list of int, or None, optional
+            The primary keys of the instances to load. If ids is None, all instances are loaded.
+            Default is None.
+
+        Returns
+        -------
+        list of instances
+            The loaded instances. If only one instance is loaded, it is returned inside a list.
+            If no instances are found, an empty list is returned.
+        """
+        try:
+            # Get the name of the primary key attribute (could be id, project_id, series_id, etc.)
+            primary_key = inspect(class_name).primary_key[0].name
+
+            if ids is None:
+                logger.info(f"Loading all instances of '{class_name.__name__}'")
+                objs = self.session.query(class_name).all()
+            elif isinstance(ids, int):
+                logger.info(f"Loading instance of '{class_name.__name__}' with primary key '{ids}'")
+                instance = self.session.query(class_name).filter(getattr(class_name, primary_key) == ids).one_or_none()
+                objs = [instance] if instance else []
+            elif isinstance(ids, list):
+                logger.info(f"Loading instances of '{class_name.__name__}' with primary keys '{ids}'")
+                objs = self.session.query(class_name).filter(getattr(class_name, primary_key).in_(ids)).all()
+            else:
+                raise ValueError('Invalid type of ids. Must be int, list of int, or None.')
+
+            if not objs:
+                logger.warning(f"No instances of '{class_name.__name__}' with primary keys '{ids}' found")
+
+            logger.info(f"Loading successful '{len(objs)}' instances of class {class_name.__name__}.")
+            return objs
+        except Exception as e:
+            logger.error(f"Failed to load instances of '{class_name.__name__}' with primary keys '{ids}' from db. Error: '{e}'")
+            raise

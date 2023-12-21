@@ -1,53 +1,181 @@
-from typing import Optional
+from typing import Type, Dict, Tuple, List, Optional, Union, Any
+from sqlalchemy import inspect
+from sqlalchemy.orm import Session
 from ..utils.base import Base
-from ..utils.log_manager import get_logger
-from kj_core import CoreConfig, DataManager, DatabaseManager, PlotManager
+from ..utils.runtime_manager import dec_runtime
+from kj_core import get_logger
 
 logger = get_logger(__name__)
 
 
 class CoreBaseClass(Base):
-    """
-    Core base class providing basic functionality for managing different components.
-
-    This class is intended to be used as a base class for more specific implementations
-    that require a CoreConfig configuration and optional DataManager, DatabaseManager, and PlotManager components.
-
-    Attributes:
-        CONFIG (CoreConfig): Configuration object.
-        DATA_MANAGER (Optional[DataManager]): An optional data manager component.
-        DATABASE_MANAGER (Optional[DatabaseManager]): An optional database manager component.
-        PLOT_MANAGER (Optional[PlotManager]): An optional plot manager component.
-    """
-
     __abstract__ = True
 
-    def __init__(self, config: CoreConfig, data_manager: Optional[DataManager] = None,
-                 database_manager: Optional[DatabaseManager] = None, plot_manager: Optional[PlotManager] = None):
+    def __init__(self):
+        super().__init__()
+        self._config = None
+        self._data_manager = None
+        self._database_manager = None
+        self._plot_manager = None
+
+    def get_child_attr_name(self) -> Optional[str]:
         """
-        Initialize the CoreBaseClass with required CoreConfig configuration and optional manager components.
+        Get the attribute name of the children based on the class name.
+
+        Returns
+        -------
+        str or None
+            The attribute name if the class name is found, otherwise None.
+        """
+        mapping = {
+            "Project": "series",
+            "Series": "measurement",
+            "Measurement": "measurement_version"
+        }
+
+        # Store the attribute name corresponding to the class in a variable
+        child_attr_name = mapping.get(self.__class__.__name__)
+
+        return child_attr_name
+
+    def get_children_instances(self) -> Optional[List[Any]]:
+        """
+        Get the child instances of the current class based on the attribute name returned by get_child_attr_name.
+
+        Returns
+        -------
+        list of any type or None
+            A list of child instances if the attribute name is found, otherwise None.
+        """
+        # Get the attribute name of children using the helper function
+        attr_name = self.get_child_attr_name()
+
+        # Retrieve the child instances using the attribute name
+        child_instances = getattr(self, attr_name, None) if attr_name else None
+
+        return child_instances
+
+    @staticmethod
+    def method_for_all_in_list(instances, method_name, *args: Any, **kwargs: Any) -> List[Any]:
+        logger.info(
+            f"Applying '{method_name}' to '{len(instances)}' of class '{instances[0].__class__.__name__}'!")
+        results: List[Any] = []
+
+        for i in instances:
+            method = getattr(i, method_name, None)
+            if callable(method):
+                try:
+                    result = method(*args, **kwargs)
+                    results.append(result)
+                except Exception as e:
+                    logger.error(
+                        f"Error occurred while executing the method '{method_name}' on '{i}': {e}"
+                    )
+            else:
+                logger.error(f"The method '{method_name}' does not exist in the class '{i.__class__.__name__}'.")
+                return []
+
+        return results
+
+    def method_for_all_children(self, method_name, *args: Any, **kwargs: Any) -> List[Any]:
+        """
+        Call a method on all objects in an attribute list and return the results.
 
         Args:
-            config (CoreConfig): A required CoreConfig configuration object.
-            data_manager (Optional[DataManager]): An optional data manager. Default is None.
-            database_manager (Optional[DatabaseManager]): An optional database manager. Default is None.
-            plot_manager (Optional[PlotManager]): An optional plot manager. Default is None.
+            method_name (str): The name of the method to be called.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
 
-        Raises:
-            ValueError: If 'config' is None, indicating improper initialization.
+        Returns:
+            List[Any]: A list containing the return values of the method calls.
         """
-        super().__init__()
-        if config is None:
-            raise ValueError("Config is None. The package has not been properly initialized. "
-                             "Please call the setup function with a valid configuration.")
 
-        self.CONFIG = config
+        children_instances = self.get_children_instances()
+        if not children_instances:
+            logger.error("No child instances found.")
+            return []
+        logger.info(
+            f"Applying '{method_name}' to '{len(children_instances)}' of class '{children_instances[0].__class__.__name__}'!")
+        results: List[Any] = []
 
-        if data_manager is not None:
-            self.DATA_MANAGER = data_manager
-        if database_manager is not None:
-            self.DATABASE_MANAGER = database_manager
-        if plot_manager is not None:
-            self.PLOT_MANAGER = plot_manager
+        for obj in children_instances:
+            method = getattr(obj, method_name, None)
+            if callable(method):
+                try:
+                    result = method(*args, **kwargs)
+                    results.append(result)
+                except Exception as e:
+                    logger.error(
+                        f"Error occurred while executing the method '{method_name}' on '{obj.__class__.__name__}': {e}"
+                    )
+            else:
+                logger.error(f"The method '{method_name}' does not exist in the class '{obj.__class__.__name__}'.")
+                return []
 
+        return results
 
+    def find_all_of_class(self, class_name: str) -> List[Any]:
+        """
+        Find all instances of a given class within the hierarchy of the current instance.
+
+        Args:
+            class_name (str): The name of the class of which instances are to be found.
+
+        Returns:
+            List[Any]: A list containing all the found instances of the class.
+        """
+        if self.__class__.__name__ == class_name:
+            return [self]
+
+        found_instances: List[Any] = []
+        children_instances = self.get_children_instances()
+
+        if children_instances is not None:
+            for child in children_instances:
+                try:
+                    found_child_instances = child.find_all_of_class(class_name)
+                    found_instances.extend(found_child_instances)
+                except Exception as e:
+                    logger.error(
+                        f"Error occurred while executing 'find_all_of_class' on '{child.__class__.__name__}': {e}")
+
+        return found_instances
+
+    def method_for_all_of_class(self, class_name: Optional[str] = None, method_name: Optional[str] = None, *args: Any,
+                                **kwargs: Any) -> List[Any]:
+        """
+        Execute a method on all instances of a specified class and return the results.
+
+        Args:
+            class_name (str, optional): The name of the class on which the method should be called. Defaults to the class of self.
+            method_name (str, optional): The name of the method to be called. Defaults to '__str__' method of the class.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            List[Any]: A list containing the return values of the method calls.
+        """
+        class_name = class_name or self.__class__.__name__
+        method_name = method_name or '__str__'
+        results: List[Any] = []
+
+        instances_of_class = self.find_all_of_class(class_name)
+        logger.info(f"Found '{len(instances_of_class)}' instances of class '{class_name}'.")
+
+        for instance in instances_of_class:
+            method = getattr(instance, method_name, None)
+            if callable(method):
+                try:
+                    result = method(*args, **kwargs)
+                    if isinstance(result, list):
+                        results.extend(result)  # Fügen Sie Listen-Elemente hinzu
+                    else:
+                        results.append(result)  # Fügen Sie einzelne Elemente hinzu
+                except Exception as e:
+                    logger.error(
+                        f"Error occurred while executing the method '{method_name}' on '{instance.__class__.__name__}': {e}"
+                    )
+            else:
+                logger.error(f"The method '{method_name}' does not exist in the class '{instance.__class__.__name__}'.")
+
+        return results
