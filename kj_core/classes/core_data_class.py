@@ -11,7 +11,7 @@ class CoreDataClass:
         self._data = None
         self.data = data
         self.data_filepath = data_filepath if data_filepath else None
-        self._data_changed = False
+        self._data_changed = True
 
     @orm.reconstructor
     def _init_on_load(self):
@@ -42,7 +42,7 @@ class CoreDataClass:
     @dec_runtime
     def write_data_feather(self):
         # Überprüfen, ob ein Pfad für die Datei vorhanden ist
-        if self.data_filepath: # and self._data_changed:
+        if self.data_filepath and self._data_changed:
             # Stellen Sie sicher, dass das Verzeichnis existiert
             Path(self.data_filepath).parent.mkdir(parents=True, exist_ok=True)
             # Speichere die Daten mit Pandas in ein Feather-Format
@@ -53,5 +53,5 @@ class CoreDataClass:
 
     @dec_runtime
     def delete_data_feather(self):
-        if self.data_filepath: # and self._data_changed:
+        if self.data_filepath:
             Path(self.data_filepath).unlink()

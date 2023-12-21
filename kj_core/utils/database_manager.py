@@ -101,16 +101,16 @@ class DatabaseManager:
 
     def commit(self):
         try:
-            # Erkennen von neuen, geänderten und gelöschten Instanzen
-            new_instances = self._session.new
-            dirty_instances = self._session.dirty
-            deleted_instances = self._session.deleted
+            # # Erkennen von neuen, geänderten und gelöschten Instanzen
+            # new_instances = self._session.new
+            # dirty_instances = self._session.dirty
+            # deleted_instances = self._session.deleted
 
             self._session.commit()
             logger.info("Transaction committed.")
 
-            # Nachdem der Commit erfolgreich war, verarbeiten Sie die Änderungen
-            self.process_instance_changes(new_instances, dirty_instances, deleted_instances)
+            # # Nachdem der Commit erfolgreich war, verarbeiten Sie die Änderungen
+            # self.process_instance_changes(new_instances, dirty_instances, deleted_instances)
 
         except Exception as e:
             logger.error(f"Error during commit: {e}")
@@ -118,48 +118,48 @@ class DatabaseManager:
             logger.info("Transaction rolled back due to an error.")
             raise
 
-    @staticmethod
-    @dec_runtime
-    def process_instance_changes(new_instances, dirty_instances, deleted_instances):
-        logger.debug(f"Starting process_instance_changes")
-
-        # Loggen der neuen Instanzen
-        if new_instances:
-            logger.info(
-                f"Processing new instances: {[instance for instance in new_instances if isinstance(instance, CoreDataClass)]}")
-            for instance in new_instances:
-                if isinstance(instance, CoreDataClass):
-                    try:
-                        instance.write_data_feather()
-                        logger.debug(f"Data written to feather for new instance: {instance}")
-                    except Exception as e:
-                        logger.error(f"Error writing data to feather for new instance {instance}: {e}")
-
-        # Loggen der geänderten Instanzen
-        if dirty_instances:
-            logger.info(
-                f"Processing dirty instances: {[instance for instance in dirty_instances if isinstance(instance, CoreDataClass)]}")
-            for instance in dirty_instances:
-                if isinstance(instance, CoreDataClass):
-                    try:
-                        instance.write_data_feather()
-                        logger.debug(f"Data written to feather for dirty instance: {instance}")
-                    except Exception as e:
-                        logger.error(f"Error writing data to feather for dirty instance {instance}: {e}")
-
-        # Loggen der gelöschten Instanzen
-        if deleted_instances:
-            logger.info(
-                f"Processing deleted instances: {[instance for instance in deleted_instances if isinstance(instance, CoreDataClass)]}")
-            for instance in deleted_instances:
-                if isinstance(instance, CoreDataClass):
-                    try:
-                        instance.delete_data_feather()
-                        logger.debug(f"Data deleted from feather for instance: {instance}")
-                    except Exception as e:
-                        logger.error(f"Error deleting data from feather for instance {instance}: {e}")
-
-        logger.debug("Finished process_instance_changes")
+    # @staticmethod
+    # @dec_runtime
+    # def process_instance_changes(new_instances, dirty_instances, deleted_instances):
+    #     logger.debug(f"Starting process_instance_changes")
+    #
+    #     # Loggen der neuen Instanzen
+    #     if new_instances:
+    #         logger.info(
+    #             f"Processing new instances: {[instance for instance in new_instances if isinstance(instance, CoreDataClass)]}")
+    #         for instance in new_instances:
+    #             if isinstance(instance, CoreDataClass):
+    #                 try:
+    #                     instance.write_data_feather()
+    #                     logger.debug(f"Data written to feather for new instance: {instance}")
+    #                 except Exception as e:
+    #                     logger.error(f"Error writing data to feather for new instance {instance}: {e}")
+    #
+    #     # Loggen der geänderten Instanzen
+    #     if dirty_instances:
+    #         logger.info(
+    #             f"Processing dirty instances: {[instance for instance in dirty_instances if isinstance(instance, CoreDataClass)]}")
+    #         for instance in dirty_instances:
+    #             if isinstance(instance, CoreDataClass):
+    #                 try:
+    #                     instance.write_data_feather()
+    #                     logger.debug(f"Data written to feather for dirty instance: {instance}")
+    #                 except Exception as e:
+    #                     logger.error(f"Error writing data to feather for dirty instance {instance}: {e}")
+    #
+    #     # Loggen der gelöschten Instanzen
+    #     if deleted_instances:
+    #         logger.info(
+    #             f"Processing deleted instances: {[instance for instance in deleted_instances if isinstance(instance, CoreDataClass)]}")
+    #         for instance in deleted_instances:
+    #             if isinstance(instance, CoreDataClass):
+    #                 try:
+    #                     instance.delete_data_feather()
+    #                     logger.debug(f"Data deleted from feather for instance: {instance}")
+    #                 except Exception as e:
+    #                     logger.error(f"Error deleting data from feather for instance {instance}: {e}")
+    #
+    #     logger.debug("Finished process_instance_changes")
 
     @property
     def session(self) -> Session:
