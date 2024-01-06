@@ -1,5 +1,5 @@
 from pathlib import Path
-from sqlalchemy import event
+from sqlalchemy import event, inspect
 from typing import List, Type
 from sqlalchemy.orm import Mapper
 from sqlalchemy.engine import Connection
@@ -20,20 +20,19 @@ class DataManager:
         self.data_directory.mkdir(parents=True, exist_ok=True)
 
     @staticmethod
-    def get_new_filename(measurement_id: int, folder_name: str = None, prefix: str = None,
-                         file_extension: str = "feather") -> str:
+    def get_new_filename(data_id: int, prefix: str = None,
+                         file_extension: str = None) -> str:
         """
-        Generates a TMS data frame table name with optional prefix and folder.
+        Generates a TMS data frame table name with optional prefix and extension.
 
-        :param measurement_id: ID of the measurement to which the data belongs.
+        :param id: ID of the data to which the data belongs.
         :param prefix: Optional prefix for the file name.
-        :param folder_name: Optional folder name to prepend.
-        :param file_extension: Optional file extension, default is '.feather'.
+        :param file_extension: Optional file extension.
         :return: New table name possibly including folder and prefix.
         """
 
         # Basisdateiname
-        filename = f"m_id_{str(measurement_id).zfill(3)}"
+        filename = f"id_{str(data_id).zfill(5)}"
 
         # Füge den Präfix hinzu, falls vorhanden
         if prefix:
@@ -43,25 +42,7 @@ class DataManager:
         if file_extension:
             filename = f"{filename}.{file_extension}"
 
-        # Füge den Ordnerpfad hinzu, falls vorhanden
-        if folder_name:
-            filename = f"{folder_name}/{filename}"
-
-        return filename
-
-    def get_new_filepath(self, measurement_id: int, folder_name: str = None, prefix: str = None,
-                         file_extension: str = "feather") -> str:
-        """
-        Generates the full file path for a TMS data frame.
-
-        :param measurement_id: ID of the measurement to which the data belongs.
-        :param folder_name: Optional folder name to prepend.
-        :param prefix: Optional prefix for the file name.
-        :param file_extension: Optional file extension, default is '.feather'.
-        :return: Full file path including the data directory.
-        """
-        filename = self.get_new_filename(measurement_id, folder_name, prefix, file_extension)
-        return str(self.data_directory / filename)
+        return str(filename)
 
     @staticmethod
     def after_insert_listener(mapper: Mapper, connection: Connection, target: DeclarativeMeta):
@@ -77,11 +58,14 @@ class DataManager:
     def after_update_listener(mapper: Mapper, connection: Connection, target: DeclarativeMeta):
         """Listener, der nach dem Aktualisieren einer Instanz aufgerufen wird."""
         if isinstance(target, CoreDataClass):
-            try:
-                target.write_data_feather()
-                logger.debug(f"Feather data updated for instance {target}")
-            except Exception as e:
-                logger.error(f"Error writing data to feather for dirty instance {target}: {e}")
+            # Prüfen, ob das 'data'-Attribut geändert wurde
+            insp = inspect(target)
+            if 'data' in insp.attrs and insp.attrs.data.history.has_changes():
+                try:
+                    target.write_data_feather()
+                    logger.debug(f"Feather data updated for instance {target}")
+                except Exception as e:
+                    logger.error(f"Error writing data to feather for dirty instance {target}: {e}")
 
     @staticmethod
     def after_delete_listener(mapper: Mapper, connection: Connection, target: DeclarativeMeta):

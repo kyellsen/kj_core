@@ -7,6 +7,25 @@ from .log_manager import get_logger
 logger = get_logger(__name__)
 
 
+def get_directory(directory: Union[str, Path]) -> Union[Path, None]:
+    """
+    Creates a folder at the specified path if it doesn't exist and returns the Path object.
+
+    Args:
+        directory (Union[str, Path]): The path to the folder.
+
+    Returns:
+        Union[Path, None]: The Path object representing the folder path, or None if an error occurred.
+    """
+    try:
+        directory = Path(directory)
+        directory.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        logger.critical(f"Failed to find or create folder, error: {e}")
+        return None
+    return directory
+
+
 def validate_and_get_file_list(search_path: Path, file_type: Optional[str] = None) -> Optional[List[Path]]:
     """
     Searches for files in the given path and returns them as a list. If a file type is specified,
