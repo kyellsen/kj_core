@@ -101,21 +101,12 @@ class DatabaseManager:
 
     def commit(self):
         try:
-            # # Erkennen von neuen, geänderten und gelöschten Instanzen
-            # new_instances = self._session.new
-            # dirty_instances = self._session.dirty
-            # deleted_instances = self._session.deleted
-
             self._session.commit()
-            logger.info("Transaction committed.")
-
-            # # Nachdem der Commit erfolgreich war, verarbeiten Sie die Änderungen
-            # self.process_instance_changes(new_instances, dirty_instances, deleted_instances)
-
+            logger.debug("Transaction committed.")
         except Exception as e:
             logger.error(f"Error during commit: {e}")
             self._session.rollback()
-            logger.info("Transaction rolled back due to an error.")
+            logger.critical("Transaction rolled back due to an error.")
             raise
 
     # @staticmethod

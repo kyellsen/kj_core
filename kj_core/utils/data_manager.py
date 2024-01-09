@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 from sqlalchemy import event, inspect
 from typing import List, Type
 from sqlalchemy.orm import Mapper
@@ -16,6 +17,7 @@ class DataManager:
         """
         Initialize a DataManager object.
         """
+        self.config = config
         self.data_directory = config.data_directory
         self.data_directory.mkdir(parents=True, exist_ok=True)
 
@@ -60,12 +62,12 @@ class DataManager:
         if isinstance(target, CoreDataClass):
             # Prüfen, ob das 'data'-Attribut geändert wurde
             insp = inspect(target)
-            if 'data' in insp.attrs and insp.attrs.data.history.has_changes():
+            if 'data' in insp.attrs:
                 try:
                     target.write_data_feather()
-                    logger.debug(f"Feather data updated for instance {target}")
+                    logger.debug(f"Feather data updated for instance '{target.__class__.__name__}': {target.data_id}")
                 except Exception as e:
-                    logger.error(f"Error writing data to feather for dirty instance {target}: {e}")
+                    logger.error(f"Error writing data to feather for dirty instance '{target.__class__.__name__}': {target.data_id}: {e}")
 
     @staticmethod
     def after_delete_listener(mapper: Mapper, connection: Connection, target: DeclarativeMeta):
@@ -88,3 +90,24 @@ class DataManager:
             event.listen(class_model, 'after_insert', self.after_insert_listener)
             event.listen(class_model, 'after_update', self.after_update_listener)
             event.listen(class_model, 'after_delete', self.after_delete_listener)
+
+    def cleanup_data_space(self):
+        data_dir = self.config.data_directory
+        dir_list = [
+            self.config.DataWindStation.data_directory,
+            self.config.DataTMS.data_directory,
+            self.config.DataMerge.data_directory
+        ]
+
+        for d in dir_list:
+            dir_path = Path(data_dir).joinpath(d)
+            try:
+                if dir_path.is_dir():
+                    shutil.rmtree(dir_path)
+                    logger.info(f"Verzeichnis rekursiv gelöscht: {dir_path}")
+                else:
+                    logger.warning(f"Erwartetes Verzeichnis nicht gefunden: {dir_path}")
+            except Exception as e:
+                logger.error(f"Fehler beim rekursiven Löschen des Verzeichnisses {dir_path}: {e}")
+
+
