@@ -9,8 +9,7 @@ from pathlib import Path
 import shutil
 
 from ..core_config import CoreConfig
-from .log_manager import get_logger
-from ..classes.core_data_class import CoreDataClass
+from kj_core import get_logger
 
 logger = get_logger(__name__)
 
@@ -100,57 +99,17 @@ class DatabaseManager:
             logger.info("Database connection closed.")
 
     def commit(self):
+        print("HIER 2")
+        logger.info("Try to Transaction committed.")
         try:
             self._session.commit()
-            logger.debug("Transaction committed.")
+            logger.info("Transaction committed.")
         except Exception as e:
             logger.error(f"Error during commit: {e}")
             self._session.rollback()
             logger.critical("Transaction rolled back due to an error.")
             raise
 
-    # @staticmethod
-    # @dec_runtime
-    # def process_instance_changes(new_instances, dirty_instances, deleted_instances):
-    #     logger.debug(f"Starting process_instance_changes")
-    #
-    #     # Loggen der neuen Instanzen
-    #     if new_instances:
-    #         logger.info(
-    #             f"Processing new instances: {[instance for instance in new_instances if isinstance(instance, CoreDataClass)]}")
-    #         for instance in new_instances:
-    #             if isinstance(instance, CoreDataClass):
-    #                 try:
-    #                     instance.write_data_feather()
-    #                     logger.debug(f"Data written to feather for new instance: {instance}")
-    #                 except Exception as e:
-    #                     logger.error(f"Error writing data to feather for new instance {instance}: {e}")
-    #
-    #     # Loggen der geänderten Instanzen
-    #     if dirty_instances:
-    #         logger.info(
-    #             f"Processing dirty instances: {[instance for instance in dirty_instances if isinstance(instance, CoreDataClass)]}")
-    #         for instance in dirty_instances:
-    #             if isinstance(instance, CoreDataClass):
-    #                 try:
-    #                     instance.write_data_feather()
-    #                     logger.debug(f"Data written to feather for dirty instance: {instance}")
-    #                 except Exception as e:
-    #                     logger.error(f"Error writing data to feather for dirty instance {instance}: {e}")
-    #
-    #     # Loggen der gelöschten Instanzen
-    #     if deleted_instances:
-    #         logger.info(
-    #             f"Processing deleted instances: {[instance for instance in deleted_instances if isinstance(instance, CoreDataClass)]}")
-    #         for instance in deleted_instances:
-    #             if isinstance(instance, CoreDataClass):
-    #                 try:
-    #                     instance.delete_data_feather()
-    #                     logger.debug(f"Data deleted from feather for instance: {instance}")
-    #                 except Exception as e:
-    #                     logger.error(f"Error deleting data from feather for instance {instance}: {e}")
-    #
-    #     logger.debug("Finished process_instance_changes")
 
     @property
     def session(self) -> Session:
@@ -222,5 +181,6 @@ class DatabaseManager:
             logger.info(f"Loading successful '{len(objs)}' instances of class {class_name.__name__}.")
             return objs
         except Exception as e:
-            logger.error(f"Failed to load instances of '{class_name.__name__}' with primary keys '{ids}' from db. Error: '{e}'")
+            logger.error(
+                f"Failed to load instances of '{class_name.__name__}' with primary keys '{ids}' from db. Error: '{e}'")
             raise

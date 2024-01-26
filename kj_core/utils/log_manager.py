@@ -28,32 +28,33 @@ class ColorfulFormatter(logging.Formatter):
 
 
 def configure_logger(config):
+    SAVE_LOGS_TO_FILE = config.save_logs_to_file
     log_directory = config.log_directory
-    log_directory.mkdir(parents=True, exist_ok=True)
+    if SAVE_LOGS_TO_FILE:
+        log_directory.mkdir(parents=True, exist_ok=True)
 
     log_level = config.log_level
     log_level = LOG_LEVELS.get(log_level.lower(), logging.INFO)
 
     log_format = "%(asctime)s [%(levelname)s] %(name)s.%(funcName)s: %(message)s"
-
     date_format = "%Y-%m-%d %H:%M:%S"
-
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    log_file = log_directory / f"{config.package_name}_log_{timestamp}.txt"
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(ColorfulFormatter(log_format, datefmt=date_format))
 
-    file_handler = logging.FileHandler(log_file)
-    file_handler.setFormatter(logging.Formatter(log_format, datefmt=date_format))
+    handlers = [console_handler]
 
-    handlers = [console_handler, file_handler]
+    if SAVE_LOGS_TO_FILE:
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        log_file = log_directory / f"{config.package_name}_log_{timestamp}.txt"
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(logging.Formatter(log_format, datefmt=date_format))
+        handlers.append(file_handler)
 
     logging.basicConfig(
         level=log_level,
         handlers=handlers,
     )
-    return
 
 
 def get_logger(name):

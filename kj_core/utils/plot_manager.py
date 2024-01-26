@@ -16,12 +16,15 @@ class PlotManager:
         self.plot_directory.mkdir(parents=True, exist_ok=True)
 
         self.figsize = (8, 6)
-        self.dpi = 200# 300 beste
+        self.dpi = 200  # 300 beste
         self.style = 'default'
         self.grid = True
         self.wide_format = True
 
         self.apply_matplotlib()
+
+    def test(self):
+        logger.error(f"Test {self}")
 
     def apply_matplotlib(self):
         """
@@ -39,7 +42,7 @@ class PlotManager:
         if self.grid:
             layout.update(dict(showgrid=self.grid))
 
-    def save_plot(self, fig, filename, subdir=None, format='jpg', auto_close=True):
+    def save_plot(self, fig, filename: str, subdir: str = None, format='jpg', auto_close=True):
         """
         Save a plot and optionally close it.
 
@@ -61,7 +64,8 @@ class PlotManager:
             if auto_close:
                 self.close_plot(fig)
 
-    def close_plot(self, fig):
+    @staticmethod
+    def close_plot(fig):
         """
         Closes the given matplotlib figure.
 
@@ -73,7 +77,7 @@ class PlotManager:
         except Exception as e:
             logger.error(f"Failed to close plot: {e}")
 
-    def get_dir_path(self, subdir=None):
+    def get_dir_path(self, subdir: str=None):
         """
         Get directory path for saving a plot. Create subdirectory if it doesn't exist.
 

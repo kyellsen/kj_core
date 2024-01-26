@@ -11,7 +11,6 @@ logger = get_logger(__name__)
 
 
 class CoreDataClass:
-    datetime_column_name = 'datetime'
 
     def __init__(self, data_id: int = None, data: pd.DataFrame = None, data_filepath: str = None,
                  datetime_added: datetime = None, datetime_last_edit: datetime = None):
@@ -147,16 +146,14 @@ class CoreDataClass:
 
     @property
     def datetime_start(self):
-        datetime_column_name = self.datetime_column_name
-        if self.data is not None and datetime_column_name in self.data.columns:
-            return self.data[datetime_column_name].min()
+        if self.data is not None:
+            return self.data.index.min()
         return None
 
     @property
     def datetime_end(self):
-        datetime_column_name = self.datetime_column_name
-        if self.data is not None and datetime_column_name in self.data.columns:
-            return self.data[datetime_column_name].max()
+        if self.data is not None:
+            return self.data.index.max()
         return None
 
     @property

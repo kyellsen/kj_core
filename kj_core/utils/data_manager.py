@@ -7,7 +7,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from ..classes.core_data_class import CoreDataClass
 
-from ..utils.log_manager import get_logger
+from kj_core import get_logger
 
 logger = get_logger(__name__)
 
@@ -90,24 +90,5 @@ class DataManager:
             event.listen(class_model, 'after_insert', self.after_insert_listener)
             event.listen(class_model, 'after_update', self.after_update_listener)
             event.listen(class_model, 'after_delete', self.after_delete_listener)
-
-    def cleanup_data_space(self):
-        data_dir = self.config.data_directory
-        dir_list = [
-            self.config.DataWindStation.data_directory,
-            self.config.DataTMS.data_directory,
-            self.config.DataMerge.data_directory
-        ]
-
-        for d in dir_list:
-            dir_path = Path(data_dir).joinpath(d)
-            try:
-                if dir_path.is_dir():
-                    shutil.rmtree(dir_path)
-                    logger.info(f"Verzeichnis rekursiv gelöscht: {dir_path}")
-                else:
-                    logger.warning(f"Erwartetes Verzeichnis nicht gefunden: {dir_path}")
-            except Exception as e:
-                logger.error(f"Fehler beim rekursiven Löschen des Verzeichnisses {dir_path}: {e}")
 
 

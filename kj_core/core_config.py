@@ -27,7 +27,9 @@ class CoreConfig:
         self.log_level = str()
 
         self.set_working_directory(working_directory if working_directory is not None else self.default_working_directory)
+
         self.set_log_level(log_level if log_level is not None else self.default_log_level)
+        self.save_logs_to_file = False
 
         self.log_directory = self.working_directory / "logs"
         self.plot_directory = self.working_directory / "plots"
