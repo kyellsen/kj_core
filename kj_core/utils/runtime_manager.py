@@ -1,6 +1,7 @@
 import time
 import functools
-from kj_core import get_logger
+
+from kj_logger import get_logger
 
 ENABLE_TIMING = True
 

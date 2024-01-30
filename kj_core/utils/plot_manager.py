@@ -2,16 +2,19 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import plotly.io as pio
 
-from ..utils.log_manager import get_logger
+from kj_logger import get_logger
 
 logger = get_logger(__name__)
 
+from kj_core import CoreConfig
+
 
 class PlotManager:
-    def __init__(self, config):
+    def __init__(self, config: CoreConfig):
         """
         Initialize a PlotManager object with default plotting attributes.
         """
+        self.config = config
         self.plot_directory = config.plot_directory
         self.plot_directory.mkdir(parents=True, exist_ok=True)
 
@@ -23,8 +26,8 @@ class PlotManager:
 
         self.apply_matplotlib()
 
-    def test(self):
-        logger.error(f"Test {self}")
+        logger.info(f"{self} initialized!")
+        logger.info(F"TEST 005")
 
     def apply_matplotlib(self):
         """
@@ -64,8 +67,7 @@ class PlotManager:
             if auto_close:
                 self.close_plot(fig)
 
-    @staticmethod
-    def close_plot(fig):
+    def close_plot(self, fig):
         """
         Closes the given matplotlib figure.
 
@@ -77,7 +79,7 @@ class PlotManager:
         except Exception as e:
             logger.error(f"Failed to close plot: {e}")
 
-    def get_dir_path(self, subdir: str=None):
+    def get_dir_path(self, subdir: str = None):
         """
         Get directory path for saving a plot. Create subdirectory if it doesn't exist.
 

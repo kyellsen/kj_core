@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional, Union, List
 from typing import Callable
 
-from .log_manager import get_logger
+from kj_logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -1,11 +1,13 @@
 from typing import Type, Dict, Tuple, List, Optional, Union, Any
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session
-from ..utils.base import Base
-from ..utils.runtime_manager import dec_runtime
-from kj_core import get_logger
+
+from kj_logger import get_logger
 
 logger = get_logger(__name__)
+
+from ..utils.base import Base
+from ..utils.runtime_manager import dec_runtime
 
 
 class CoreBaseClass(Base):
@@ -89,7 +91,6 @@ class CoreBaseClass(Base):
         Returns:
             List[Any]: A list containing the return values of the method calls.
         """
-
         children_instances = self.get_children_instances()
         if not children_instances:
             logger.error("No child instances found.")

@@ -4,20 +4,22 @@ from sqlalchemy import orm
 from datetime import datetime
 from typing import Optional
 
-from kj_core.utils.runtime_manager import dec_runtime
-from kj_core.utils.log_manager import get_logger
+from kj_logger import get_logger
 
 logger = get_logger(__name__)
+
+from kj_core.utils.runtime_manager import dec_runtime
 
 
 class CoreDataClass:
 
-    def __init__(self, data_id: int = None, data: pd.DataFrame = None, data_filepath: str = None,
+    def __init__(self, data_id: int = None, data: pd.DataFrame = None, data_filepath: str = None, data_changed: bool = False,
                  datetime_added: datetime = None, datetime_last_edit: datetime = None):
         self.data_id = data_id
         self._data = None
         self.data = data
         self.data_filepath = data_filepath if data_filepath else None
+        self.data_changed = data_changed
 
         # For datetime_added and datetime_last_edit, using current datetime if not provided
         self.datetime_added = datetime_added if datetime_added is not None else datetime.now()
@@ -29,7 +31,7 @@ class CoreDataClass:
         self._data = None
 
     @property
-    def data(self):
+    def data(self) -> Optional[pd.DataFrame]:
         """Gets the data."""
         if self._data is None and self.data_filepath:
             self.read_data_feather()
@@ -40,21 +42,23 @@ class CoreDataClass:
     @data.setter
     def data(self, new_data: pd.DataFrame) -> None:
         """
-        Sets new data to the object.
+        Sets new data to the object, marking it as changed if it differs from the current data.
 
-        Args:
+        Parameters:
             new_data (pd.DataFrame): The new data to be set.
 
         Raises:
-            ValueError: If the new data is not a pandas DataFrame or is empty.
+            ValueError: If new_data is not a pandas DataFrame.
         """
-        try:
-            self._data = new_data
-            logger.debug("Data has been successfully updated.")
+        if not isinstance(new_data, pd.DataFrame):
+            raise ValueError("Provided data must be a pandas DataFrame.")
 
-        except Exception as e:
-            logger.error(f"Unexpected error during data update: {e}")
-            raise
+        if self._data is None or not self._data.equals(new_data):
+            self._data = new_data
+            self.data_changed = True
+            logger.debug(f"@data.setter: {self.__class__.__name__}._data updated and marked as changed: data_changed = '{self.data_changed}'")
+        else:
+            logger.debug("@data.setter: No data update required as the provided data is identical to the current data.")
 
     @dec_runtime
     def read_data_feather(self) -> Optional[pd.DataFrame]:

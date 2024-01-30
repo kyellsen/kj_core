@@ -2,16 +2,15 @@ from typing import List, Optional, Union, Any
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import SQLAlchemyError
-from kj_core.utils.base import Base
-from kj_core.utils.runtime_manager import dec_runtime
-
 from pathlib import Path
 import shutil
 
-from ..core_config import CoreConfig
-from kj_core import get_logger
+from kj_logger import get_logger
 
 logger = get_logger(__name__)
+
+from kj_core.utils.base import Base
+from kj_core import CoreConfig
 
 
 class DatabaseManager:
@@ -26,6 +25,7 @@ class DatabaseManager:
 
         :param config: Core configuration object containing database settings.
         """
+
         self.config = config
 
         self.database_directory = Path(config.database_directory)
@@ -36,6 +36,8 @@ class DatabaseManager:
         self.engine = None
         self.session_factory = None
         self._session = None
+
+        logger.info(f"{self} initialized!")
 
     def duplicate(self, database_path: str) -> None:
         """
@@ -77,7 +79,7 @@ class DatabaseManager:
             Base.metadata.create_all(self.engine)
             self.session_factory = sessionmaker(bind=self.engine, autocommit=False)
             self._session = self.session_factory()  # Erstellen einer Session
-            logger.info(f"Connected to the database at {db_file_path}")
+            logger.info(f"Successfully connected!")
         except SQLAlchemyError as e:
             logger.error(f"Error connecting to the database: {e}")
             raise
@@ -99,17 +101,15 @@ class DatabaseManager:
             logger.info("Database connection closed.")
 
     def commit(self):
-        print("HIER 2")
-        logger.info("Try to Transaction committed.")
+        logger.debug("Starting to commit changes to Database:")
         try:
             self._session.commit()
-            logger.info("Transaction committed.")
+            logger.debug("Transaction committed.")
         except Exception as e:
-            logger.error(f"Error during commit: {e}")
+            logger.critical(f"Error during commit: {e}")
             self._session.rollback()
             logger.critical("Transaction rolled back due to an error.")
             raise
-
 
     @property
     def session(self) -> Session:
