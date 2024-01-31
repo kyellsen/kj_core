@@ -26,8 +26,7 @@ class PlotManager:
 
         self.apply_matplotlib()
 
-        logger.info(f"{self} initialized!")
-        logger.info(F"TEST 005")
+        logger.info(f"{self} initialized! Code: 005")
 
     def apply_matplotlib(self):
         """
@@ -54,20 +53,27 @@ class PlotManager:
             filename (str): The name of the file.
             subdir (str, optional): The subdirectory in which to save the file.
             format (str, optional): The format to save the figure.
-            auto_close (bool, optional): Automatically close the plot after saving. Only for matplotlob.
+            auto_close (bool, optional): Automatically close the plot after saving. Only for matplotlib.
         """
         dir_path = self.get_dir_path(subdir)
+        logger.debug(f"Starting to save plot: '{subdir}/{filename}.*'")
 
-        if isinstance(fig, go.Figure):
-            full_path = dir_path / f"{filename}.html"
-            pio.write_html(fig, str(full_path))
-        else:
-            full_path = dir_path / f"{filename}.{format}"
-            fig.savefig(str(full_path), dpi=self.dpi)
-            if auto_close:
-                self.close_plot(fig)
+        try:
+            if isinstance(fig, go.Figure):
+                full_path = dir_path / f"{filename}.html"
+                pio.write_html(fig, str(full_path))
+            else:
+                full_path = dir_path / f"{filename}.{format}"
+                fig.savefig(str(full_path), dpi=self.dpi)
+                if auto_close:
+                    self.close_plot(fig)
 
-    def close_plot(self, fig):
+            logger.debug(f"Plot saved successfully: '{full_path}'")
+        except Exception as e:
+            logger.error(f"Error saving plot: {e}")
+
+    @staticmethod
+    def close_plot(fig):
         """
         Closes the given matplotlib figure.
 

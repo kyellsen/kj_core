@@ -37,7 +37,7 @@ class DatabaseManager:
         self.session_factory = None
         self._session = None
 
-        logger.info(f"{self} initialized!")
+        logger.info(f"{self} initialized! Code: 004")
 
     def duplicate(self, database_path: str) -> None:
         """

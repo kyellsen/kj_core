@@ -13,7 +13,8 @@ from kj_core.utils.runtime_manager import dec_runtime
 
 class CoreDataClass:
 
-    def __init__(self, data_id: int = None, data: pd.DataFrame = None, data_filepath: str = None, data_changed: bool = False,
+    def __init__(self, data_id: int = None, data: pd.DataFrame = None, data_filepath: str = None,
+                 data_changed: bool = False,
                  datetime_added: datetime = None, datetime_last_edit: datetime = None):
         self.data_id = data_id
         self._data = None
@@ -40,27 +41,30 @@ class CoreDataClass:
         return self._data
 
     @data.setter
-    def data(self, new_data: pd.DataFrame) -> None:
+    def data(self, new_data: Optional[pd.DataFrame]) -> None:
         """
         Sets new data to the object, marking it as changed if it differs from the current data.
 
         Parameters:
-            new_data (pd.DataFrame): The new data to be set.
+            new_data (Optional[pd.DataFrame]): The new data to be set. Can be None.
 
         Raises:
-            ValueError: If new_data is not a pandas DataFrame.
+            ValueError: If new_data is neither a pandas DataFrame nor None.
         """
-        if not isinstance(new_data, pd.DataFrame):
-            raise ValueError("Provided data must be a pandas DataFrame.")
+        if new_data is not None and not isinstance(new_data, pd.DataFrame):
+            raise ValueError(f"Provided data must be a pandas DataFrame or None, not type: {type(new_data)}")
 
-        if self._data is None or not self._data.equals(new_data):
+        if self._data is None and new_data is None:
+            logger.debug("@data.setter: No update required as both current and new data are None.")
+        elif self._data is None or not self._data.equals(new_data):
             self._data = new_data
             self.data_changed = True
-            logger.debug(f"@data.setter: {self.__class__.__name__}._data updated and marked as changed: data_changed = '{self.data_changed}'")
+            logger.debug(
+                f"@data.setter: {self.__class__.__name__}._data updated and marked as changed: data_changed = '{self.data_changed}'")
         else:
             logger.debug("@data.setter: No data update required as the provided data is identical to the current data.")
 
-    @dec_runtime
+    # @dec_runtime
     def read_data_feather(self) -> Optional[pd.DataFrame]:
         """
         Reads data from a feather file specified in the `data_filepath` attribute.
@@ -93,7 +97,7 @@ class CoreDataClass:
 
         return None
 
-    @dec_runtime
+    # @dec_runtime
     def write_data_feather(self) -> None:
         """
         Writes the DataFrame stored in self._data to a feather file at self.data_filepath.
@@ -120,7 +124,7 @@ class CoreDataClass:
         except Exception as e:
             logger.error(f"Unexpected error when writing data to {self.data_filepath}: {e}")
 
-    @dec_runtime
+    # @dec_runtime
     def delete_data_feather(self) -> None:
         """
         Deletes the feather file located at self.data_filepath.

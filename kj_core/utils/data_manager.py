@@ -20,8 +20,7 @@ class DataManager:
         self.data_directory = config.data_directory
         self.data_directory.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"{self} initialized!")
-        logger.info(F"TEST 007")
+        logger.info(f"{self} initialized! Code: 003")
 
     @staticmethod
     def get_new_filename(data_id: int, prefix: str = None,

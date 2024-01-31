@@ -29,8 +29,7 @@ class CoreConfig:
         self.plot_directory = self.working_directory / "plots"
         self.data_directory = self.working_directory / "data"
         self.database_directory = self.working_directory / "databases"
-        logger.info(f"{self} initialized!")
-        logger.info(f"TEST_004")
+        logger.info(f"{self} initialized! Code: 001")
 
     def set_working_directory(self, directory: str) -> None:
         """
