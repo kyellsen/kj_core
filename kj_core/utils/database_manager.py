@@ -140,7 +140,7 @@ class DatabaseManager:
         else:
             logger.warning("Changes were not committed to the database and discarded.")
 
-    def load(self, class_name, ids: Optional[Union[int, List[int]]] = None) -> List[Any]:
+    def load(self, class_name: object, ids: Optional[Union[int, List[int]]] = None) -> List[Any]:
         """
         Load instances of a specified class from a SQLite database using SQLAlchemy.
 
@@ -163,14 +163,14 @@ class DatabaseManager:
             primary_key = inspect(class_name).primary_key[0].name
 
             if ids is None:
-                logger.info(f"Loading all instances of '{class_name.__name__}'")
+                logger.debug(f"Prozess all instances of '{class_name.__name__}'")
                 objs = self.session.query(class_name).all()
             elif isinstance(ids, int):
-                logger.info(f"Loading instance of '{class_name.__name__}' with primary key '{ids}'")
+                logger.debug(f"Prozess instance of '{class_name.__name__}' with primary key '{ids}'")
                 instance = self.session.query(class_name).filter(getattr(class_name, primary_key) == ids).one_or_none()
                 objs = [instance] if instance else []
             elif isinstance(ids, list):
-                logger.info(f"Loading instances of '{class_name.__name__}' with primary keys '{ids}'")
+                logger.debug(f"Prozess instances of '{class_name.__name__}' with primary keys '{ids}'")
                 objs = self.session.query(class_name).filter(getattr(class_name, primary_key).in_(ids)).all()
             else:
                 raise ValueError('Invalid type of ids. Must be int, list of int, or None.')

@@ -14,8 +14,7 @@ from kj_core.utils.runtime_manager import dec_runtime
 class CoreDataClass:
 
     def __init__(self, data_id: int = None, data: pd.DataFrame = None, data_filepath: str = None,
-                 data_changed: bool = False,
-                 datetime_added: datetime = None, datetime_last_edit: datetime = None):
+                 data_changed: bool = False, datetime_added: datetime = None, datetime_last_edit: datetime = None):
         self.data_id = data_id
         self._data = None
         self.data = data
@@ -58,6 +57,7 @@ class CoreDataClass:
             logger.debug("@data.setter: No update required as both current and new data are None.")
         elif self._data is None or not self._data.equals(new_data):
             self._data = new_data
+            self.datetime_last_edit = datetime.now()
             self.data_changed = True
             logger.debug(
                 f"@data.setter: {self.__class__.__name__}._data updated and marked as changed: data_changed = '{self.data_changed}'")
