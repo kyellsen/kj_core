@@ -1,4 +1,4 @@
-from typing import Type, Dict, Tuple, List, Optional, Union, Any
+from typing import List, Optional, Any
 
 from kj_logger import get_logger
 
@@ -12,14 +12,11 @@ class CoreBaseClass(Base):
 
     def __init__(self):
         super().__init__()
-        self._config = None
-        self._data_manager = None
-        self._database_manager = None
-        self._plot_manager = None
 
     def get_child_attr_name(self) -> Optional[str]:
         """
         Get the attribute name of the children based on the class name.
+        Should be overridden in specific packages due to the specific hierarchie.
 
         Returns
         -------
@@ -27,9 +24,9 @@ class CoreBaseClass(Base):
             The attribute name if the class name is found, otherwise None.
         """
         mapping = {
-            "Project": "series",
+            # "Project": "series",
             "Series": "measurement",
-            "Measurement": "measurement_version"
+            # "Measurement": "measurement_version"
         }
 
         # Store the attribute name corresponding to the class in a variable

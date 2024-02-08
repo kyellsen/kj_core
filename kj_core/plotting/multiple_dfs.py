@@ -6,7 +6,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 
-def plot_multiple_dfs(dfs_and_columns: List[Tuple[str, pd.DataFrame, List[str]]]):
+def plot_multiple_lines(dfs_and_columns: List[Tuple[str, pd.DataFrame, List[str]]]):
     fig = go.Figure()
 
     for name, df, columns in dfs_and_columns:
@@ -15,16 +15,52 @@ def plot_multiple_dfs(dfs_and_columns: List[Tuple[str, pd.DataFrame, List[str]]]
                 fig.add_trace(go.Scatter(x=df.index, y=df[column], mode='lines', name=f'{name}: {column}'))
 
     fig.update_layout(
-        title='Compare DFs',
+        title='Line-Plot of TMS-Data Across Different Processing States',
         xaxis_title='DateTime',
-        yaxis_title='Value',
+        yaxis_title='Inclination [°]',
         legend_title='Variable'
     )
 
     return fig
 
 
-def plot_polar_multiple(dfs_and_names: List[Tuple[str, pd.DataFrame]],
+def plot_multiple_scatter(dfs_and_columns: List[Tuple[str, pd.DataFrame, any]], columns: List[str]) -> go.Figure:
+    """
+    Creates a scatter plot for various DataFrames.
+
+    Parameters:
+    - dfs_and_names (List[Tuple[str, pd.DataFrame]]): A list of tuples, each consisting of a string (name) and a DataFrame.
+    - columns (List[str]): List of columns to be plotted. Defaults to inclination values in East-West and North-South directions.
+
+    Returns:
+    - go.Figure: A Plotly Figure object representing the scatter plot.
+    """
+
+    fig = go.Figure()
+
+    for name, df, _, in dfs_and_columns:
+        if all(column in df for column in columns):
+            x, y = columns
+
+            fig.add_trace(go.Scatter(
+                x=df[x],
+                y=df[y],
+                mode='markers',
+                name=name,
+                marker=dict(size=5)
+            ))
+
+    fig.update_layout(
+        title='Scatter-Plot of TMS-Data Across Different Processing States',
+        xaxis_title='Inclination vertical to wind direction[°]',
+        yaxis_title='Inclination in wind direction[°]',
+        legend_title='Variable'
+    )
+
+    return fig
+
+
+def plot_multiple_polar(dfs_and_names: List[Tuple[str, pd.DataFrame, any]],
                         columns: List[str]) -> go.Figure:
     """
     Erstellt einen gemeinsamen Polar-Plot für verschiedene DataFrames.
@@ -39,7 +75,7 @@ def plot_polar_multiple(dfs_and_names: List[Tuple[str, pd.DataFrame]],
 
     fig = go.Figure()
 
-    for name, df in dfs_and_names:
+    for name, df, _, in dfs_and_names:
         if all(column in df for column in columns):
             x, y = columns
             r = np.sqrt(df[x] ** 2 + df[y] ** 2)
@@ -55,7 +91,7 @@ def plot_polar_multiple(dfs_and_names: List[Tuple[str, pd.DataFrame]],
 
     # Layout-Anpassungen
     fig.update_layout(
-        title='Polar Plot of Tree Inclination Across Different Processing States',
+        title='Polar-Plot of TMS-Data Across Different Processing States',
         polar=dict(
             radialaxis=dict(visible=True),
             angularaxis=dict(direction="clockwise", period=360)
