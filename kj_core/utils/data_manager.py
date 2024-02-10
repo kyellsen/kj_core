@@ -26,7 +26,7 @@ class DataManager:
     def get_new_filename(data_id: int, prefix: str = None,
                          file_extension: str = None) -> str:
         """
-        Generates a TMS data frame table name with optional prefix and extension.
+        Generates a DataFrame table name with optional prefix and extension.
 
         :param data_id: ID of the data to which the data belongs.
         :param prefix: Optional prefix for the file name.

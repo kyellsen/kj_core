@@ -1,5 +1,4 @@
 from typing import List, Optional, Any
-
 from kj_logger import get_logger
 
 logger = get_logger(__name__)
