@@ -1,2 +1,4 @@
 .idea/
 kj_core.egg-info/
+build/
+dist/
