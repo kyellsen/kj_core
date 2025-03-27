@@ -1,3 +1,5 @@
+from slugify import slugify
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.graph_objects as go
@@ -48,26 +50,30 @@ class PlotManager:
         if self.grid:
             layout.update(dict(showgrid=self.grid))
 
-    def save_plot(self, fig, filename: str, subdir: str = None, format='jpg', auto_close=True):
+    def save_plot(self, fig, filename: str, subdir: str = None, format: str = "jpg", auto_close: bool = True):
         """
         Save a plot and optionally close it.
 
         Parameters:
             fig: The figure object to save.
-            filename (str): The name of the file.
-            subdir (str, optional): The subdirectory in which to save the file.
+            filename (str): The name of the file (will be slugified).
+            subdir (str, optional): The subdirectory in which to save the file (will be slugified).
             format (str, optional): The format to save the figure.
-            auto_close (bool, optional): Automatically close the plot after saving. Only for matplotlib.
+            auto_close (bool, optional): Automatically close the plot after saving (for matplotlib).
         """
-        dir_path = self.get_dir_path(subdir)
-        logger.debug(f"Starting to save plot: '{subdir}/{filename}.*'")
+        # Slugify filename and subdir
+        filename_slug = slugify(filename, separator="_")
+        subdir_slug = slugify(subdir, separator="_") if subdir else None
+
+        dir_path = self.get_dir_path(subdir_slug)
+        logger.debug(f"Starting to save plot: '{subdir_slug}/{filename_slug}.*'")
 
         try:
             if isinstance(fig, go.Figure):
-                full_path = dir_path / f"{filename}.html"
+                full_path = dir_path / f"{filename_slug}.html"
                 pio.write_html(fig, str(full_path))
             else:
-                full_path = dir_path / f"{filename}.{format}"
+                full_path = dir_path / f"{filename_slug}.{format}"
                 fig.savefig(str(full_path), dpi=self.dpi)
                 if auto_close:
                     self.close_plot(fig)
