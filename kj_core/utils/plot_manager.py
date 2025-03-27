@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import seaborn as sns
 import plotly.graph_objects as go
 import plotly.io as pio
 
@@ -19,8 +20,8 @@ class PlotManager:
         self.plot_directory.mkdir(parents=True, exist_ok=True)
 
         self.figsize = (8, 6)
-        self.dpi = 200  # 300 beste
-        self.style = 'default'
+        self.dpi = 300  # 300 beste
+        self.seaborn_style = 'whitegrid'
         self.grid = True
         self.wide_format = True
 
@@ -35,6 +36,9 @@ class PlotManager:
         plt.rcParams['figure.figsize'] = self.figsize
         plt.rcParams['axes.grid'] = self.grid
         plt.rcParams['savefig.dpi'] = self.dpi
+
+        # Seaborn-Styling aktivieren
+        sns.set_style("whitegrid")
 
     def apply_plotly(self):
         """Anwenden der festgelegten Attribute auf den Plot für Plotly"""
