@@ -22,6 +22,16 @@ class DataManager:
 
         logger.info(f"{self} initialized! Code: 003")
 
+    def __repr__(self) -> str:
+        """
+        Returns a detailed string representation of the DataManager instance.
+        """
+        return (
+            f"<DataManager>\n"
+            f"  Data Directory:     {self.data_directory}\n"
+            f"  From Config:        {self.config.__class__.__name__}\n"
+        )
+
     @staticmethod
     def get_new_filename(data_id: int, prefix: str = None,
                          file_extension: str = None) -> str:

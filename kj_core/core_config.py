@@ -31,6 +31,19 @@ class CoreConfig:
         self.database_directory = self.working_directory / "databases"
         logger.info(f"{self} initialized! Code: 001")
 
+    def __repr__(self) -> str:
+        """
+        Returns a detailed string representation of the CoreConfig instance.
+        """
+        return (
+            f"<CoreConfig>\n"
+            f"  Package:            {self.package_name}\n"
+            f"  Working Directory:  {self.working_directory}\n"
+            f"  Plot Directory:     {self.plot_directory}\n"
+            f"  Data Directory:     {self.data_directory}\n"
+            f"  Database Directory: {self.database_directory}\n"
+        )
+
     def set_working_directory(self, directory: str) -> None:
         """
         Sets the working directory to the specified path.
@@ -52,3 +65,5 @@ class CoreConfig:
 
         except Exception as e:
             logger.error(f"Error while setting the working directory: {e}")
+
+

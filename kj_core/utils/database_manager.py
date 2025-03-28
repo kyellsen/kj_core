@@ -39,6 +39,19 @@ class DatabaseManager:
 
         logger.info(f"{self} initialized! Code: 004")
 
+    def __repr__(self) -> str:
+        """
+        Returns a detailed string representation of the DatabaseManager instance.
+        """
+        return (
+            f"<DatabaseManager>\n"
+            f"  Database Directory: {self.database_directory}\n"
+            f"  Connected DB Name:  {self.db_name or '—'}\n"
+            f"  Engine Created:     {'Yes' if self.engine else 'No'}\n"
+            f"  Session Active:     {'Yes' if self._session else 'No'}\n"
+            f"  From Config:        {self.config.__class__.__name__}\n"
+        )
+
     def duplicate(self, database_path: str) -> None:
         """
         Duplicates a database file from a source path to the database directory.
