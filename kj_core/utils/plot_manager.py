@@ -24,6 +24,7 @@ class PlotManager:
         self.figsize = (8, 6)
         self.dpi = 300  # 300 beste
         self.seaborn_style = 'whitegrid'
+        self.color_palette = "bright"
         self.grid = True
         self.wide_format = True
 
@@ -31,16 +32,33 @@ class PlotManager:
 
         logger.info(f"{self} initialized! Code: 005")
 
+    def __repr__(self) -> str:
+        """
+        Return a detailed string representation of the PlotManager instance.
+        """
+        return (
+            f"<PlotManager>\n"
+            f"  Plot Directory:    {self.plot_directory}\n"
+            f"  DPI:               {self.dpi}\n"
+            f"  Figure Size:       {self.figsize}\n"
+            f"  Seaborn Style:     '{self.seaborn_style}'\n"
+            f"  Color Palette:     '{self.color_palette}'\n"
+            f"  Grid Enabled:      {self.grid}\n"
+            f"  Wide Format:       {self.wide_format}\n"
+            f"  From Config:       {self.config.__class__.__name__}\n"
+        )
+
     def apply_matplotlib(self):
         """
-        Apply specified attributes to matplotlib plots.
+        Apply specified attributes to matplotlib plots (Seaborn included).
         """
         plt.rcParams['figure.figsize'] = self.figsize
         plt.rcParams['axes.grid'] = self.grid
         plt.rcParams['savefig.dpi'] = self.dpi
 
         # Seaborn-Styling aktivieren
-        sns.set_style("whitegrid")
+        sns.set_style(self.seaborn_style)
+        sns.set_palette(self.color_palette)
 
     def apply_plotly(self):
         """Anwenden der festgelegten Attribute auf den Plot für Plotly"""
