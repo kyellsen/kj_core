@@ -62,6 +62,70 @@ def generate_latex_table(latex_string: str, caption_text: str, label_clean: str)
     """
 
 
+def generate_grouped_latex_tables(df_latex: pd.DataFrame, caption: str, column_format: str, group_by: str, latex_export_directory: Path) -> None:
+    """
+    Generate grouped LaTeX tables for each unique value in a specified column of a DataFrame.
+
+    Parameters:
+        df_latex (pd.DataFrame): The DataFrame with already formatted columns.
+        caption (str): The caption for the LaTeX tables.
+        column_format (str): The format for the LaTeX tables.
+        group_by (str): The column name to group by.
+        latex_export_directory (Path): The directory to save the LaTeX tables.
+
+    Returns:
+        None
+    """
+    try:
+        # DataFrame grouped by specified column
+        grouped = df_latex.groupby(group_by, observed=True)
+
+        # LaTeX tables to be combined in a single file
+        combined_tables = []
+
+        for group, group_df in grouped:
+            # Drop the group_by column
+            group_df = group_df.drop(columns=[group_by])
+
+            # Format 'id' column as string if it exists
+            if 'ID' in group_df.columns:
+                group_df['ID'] = group_df['ID'].astype(str)
+
+            # Calculate statistics
+            mean_row = group_df.mean(numeric_only=True).rename('Mean')
+            median_row = group_df.median(numeric_only=True).rename('Median')
+            sd_row = group_df.std(numeric_only=True).rename('SD')
+
+            # Combine stats with original DataFrame
+            stats_df = pd.concat([group_df, mean_row.to_frame().T, median_row.to_frame().T, sd_row.to_frame().T])
+
+            # Generate LaTeX string from DataFrame
+            df_latex_string = stats_df.to_latex(
+                index=True,
+                escape=False,
+                column_format=column_format,
+                float_format="{:0.2f}".format
+            )
+
+            # Create caption and label for the group
+            caption_text = create_caption(caption, f"{caption} für {slugify(str(group), separator=' ')}")
+            label_clean = create_label(caption=caption, additional_label=str(group))
+
+            # Generate LaTeX table
+            latex_table = generate_latex_table(df_latex_string, caption_text, label_clean)
+
+            combined_tables.append(latex_table)
+
+        # Combine all tables and save to a single file
+        if combined_tables:
+            final_output = "\n\n".join(combined_tables)
+            file_name = create_label(caption) + ".tex"
+            save_to_file(final_output, latex_export_directory / file_name)
+
+    except Exception as e:
+        print(f"Error generating grouped LaTeX tables: {e}")
+
+
 def save_to_file(content: str, file_path: Path) -> None:
     """
     Save the given content to a specified file.
@@ -163,4 +227,7 @@ def build_data_dict_df(
 
     except Exception as e:
         raise ValueError(f"Failed to build DataFrame: {e}")
+
+
+
 

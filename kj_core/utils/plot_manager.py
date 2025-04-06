@@ -25,6 +25,7 @@ class PlotManager:
         self.dpi = 300  # 300 beste
         self.seaborn_style = 'whitegrid'
         self.color_palette = "bright"
+        self.color_palette_list = sns.color_palette(self.color_palette)
         self.grid = True
         self.wide_format = True
 
