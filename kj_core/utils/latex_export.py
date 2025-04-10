@@ -51,10 +51,10 @@ def generate_latex_table(latex_string: str, caption_text: str, label_clean: str)
         str: The complete LaTeX table string.
     """
     return f"""
-    \\begin{{table}}[h]
+    \\begin{{table}}[h!]
         \\centering
         {caption_text}
-        \\begin{{adjustbox}}{{max width=\\linewidth, max height=\\textheight}}
+        \\begin{{adjustbox}}{{max width=\\linewidth, max height=0.9\\textheight}}
         {latex_string}
         \\end{{adjustbox}}
         \\label{{tab:{label_clean}}}
