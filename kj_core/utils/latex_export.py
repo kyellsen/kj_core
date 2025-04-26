@@ -1,7 +1,7 @@
 from pathlib import Path
 from slugify import slugify
 import pandas as pd
-from typing import Optional
+from typing import Optional, List
 
 
 def create_caption(caption: str, caption_long: str = None) -> str:
@@ -228,6 +228,89 @@ def build_data_dict_df(
     except Exception as e:
         raise ValueError(f"Failed to build DataFrame: {e}")
 
+import pandas as pd
+from typing import List, Optional
+
+
+def grouped_describe(
+    df: pd.DataFrame,
+    group_by: str,
+    cols: Optional[List[str]] = None,
+    stats: Optional[List[str]] = None,
+    include_overall: bool = False,
+    overall_label: str = "Alle",
+    stats_label: str = "Statistik",
+) -> pd.DataFrame:
+    """
+    Gruppiertes `describe()` mit Original‑Gruppenreihenfolge
+    + optionaler Gesamtzeile und frei benennbarer Statistik‑Ebene.
+
+    Gibt einen DataFrame zurück mit
+        Index 0 : Gruppen (Reihenfolge wie im DF bzw. Categorical)
+        Index 1 : <stats_label> (count, mean, …)
+        Spalten : Variablen
+    """
+    # --- Grundchecks -------------------------------------------------------
+    if group_by not in df.columns:
+        raise KeyError(f"Gruppierungs‑Spalte '{group_by}' fehlt.")
+
+    if cols is None:
+        cols = df.select_dtypes("number").columns.tolist()
+
+    if stats is None:                   # Standard‑Kennzahlen von describe()
+        stats = ["count", "mean", "std", "min",
+                 "25%", "50%", "75%", "max"]
+
+    # --- Beschreibende Statistik ------------------------------------------
+    g_desc = (
+        df.groupby(group_by, sort=False, dropna=False, observed=False)[cols]
+          .describe()
+    )
+
+    g_fmt = (
+        g_desc.swaplevel(axis=1)             # (stat, var)
+               .stack(level=0, future_stack=True)               # 'stat' → Zeilen‑Index
+    )
+    g_fmt.index.set_names([group_by, stats_label], inplace=True)
+
+    # nur angeforderte Kennzahlen & Reihenfolge sichern
+    g_fmt = g_fmt.loc[pd.IndexSlice[:, stats], :]
+
+    parts = [g_fmt]
+
+    # --- Gesamtzeile -------------------------------------------------------
+    if include_overall:
+        overall = (
+            df[cols].describe()
+              .loc[stats]
+        )
+        overall.index.name = stats_label
+        overall.index = pd.MultiIndex.from_product(
+            [[overall_label], overall.index],
+            names=[group_by, stats_label],
+        )
+        parts.append(overall)
+
+    result = pd.concat(parts)
+
+    # --- Endgültige Reihenfolge festnageln --------------------------------
+    # 1) Gruppenreihenfolge: ordered‑Categorical → Kategorien,
+    #    sonst First‑Appearance‑Reihenfolge
+    if isinstance(df[group_by], pd.CategoricalDtype) and \
+       df[group_by].cat.ordered:
+        group_order = df[group_by].cat.categories.tolist()
+    else:
+        group_order = df[group_by].drop_duplicates().tolist()
+
+    if include_overall:
+        group_order += [overall_label]
+
+    # 2) Vollständiger MultiIndex
+    full_index = pd.MultiIndex.from_product(
+        [group_order, stats],
+        names=[group_by, stats_label],
+    )
+    return result.reindex(full_index)
 
 
 
